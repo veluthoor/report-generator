@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+// Initialize Groq client only if API key is available (runtime)
+const groq = process.env.GROQ_API_KEY 
+  ? new Groq({ apiKey: process.env.GROQ_API_KEY })
+  : null;
 
 async function fetchWebsiteContext(url: string): Promise<string> {
   if (!url) return '';
@@ -38,6 +39,14 @@ async function fetchWebsiteContext(url: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Groq client is initialized
+    if (!groq) {
+      return NextResponse.json(
+        { error: 'API key not configured', details: 'GROQ_API_KEY environment variable is missing' },
+        { status: 500 }
+      );
+    }
+
     const body = await request.json();
     console.log('Received request body:', JSON.stringify(body, null, 2));
     
